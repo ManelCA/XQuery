@@ -1,0 +1,149 @@
+1. los títulos de los libros con la etiqueta "titulo".
+
+for $titulo in /bookstore/book/title/text()
+return <titulo>{$titulo}</titulo>
+
+2. los libros cuyo precio sea menor o igual a 30. Primero incluyendo la condición en la cláusula "where" y luego en la ruta del XPath.
+
+for $libro in /bookstore/book
+where $libro/price <= 30
+return $libro
+
+3. sólo el título de los libros cuyo precio sea menor o igual a 30.
+
+for $libro in /bookstore/book
+where $libro/price <= 30
+return $libro
+
+4. sólo el título sin atributos de los libros cuyo precio sea menor o igual a 30.
+
+for $libro in /bookstore/book
+where $libro/price <= 30
+return $libro/title
+
+5. el título y el autor de los libros del año 2005, y etiquetar cada uno de ellos con "lib2005".
+
+for $libro in /bookstore/book
+where $libro/year=2005
+return <lib2005>{$libro/title,$libro/author}</lib2005>
+
+6. los años de publicación, primero con "for" y luego con "let" para comprobar la diferencia entre ellos. Etiquetar la salida con "publicacion".
+
+for $year in /bookstore/book/year
+return <publicacion>{$year}</publicacion>
+
+7. los libros ordenados primero por "category" y luego por "title" en una sola consulta.
+
+for $libro in /bookstore/book
+order by $libro/@category,$libro/title
+return $libro
+
+8. cuántos libros hay, y etiquetarlo con "total".
+
+let $num_libro := count(/bookstore/book)
+return <total>{$num_libro}</total>
+
+9. los títulos de los libros y al final una etiqueta con el número total de libros.
+
+let $total := count (/bookstore/book),
+    $titulos := (
+      for $libro in /bookstore/book/title 
+      return <titulo>{$libro/text()}</titulo>) 
+return 
+      <resultado>
+        {$titulos}
+        <total_libros>{$total}</total_libros>
+      </resultado>
+
+10. el precio mínimo y máximo de los libros.
+
+let $max := max(/bookstore/book/price), 
+    $min := min(/bookstore/book/price)
+return
+<resultado>
+  <max>{$max}</max>
+  <min>{$min}</min>
+</resultado>
+
+11. el título del libro, su precio y su precio con el IVA incluido, cada uno con su propia etiqueta. Ordénalos por precio con IVA.
+
+for $libro in /bookstore/book
+let $precio_iva := ($libro/price * 1.21)
+order by $precio_iva
+return 
+<libro>
+  <titulo>{$libro/title/text()}</titulo>
+  <precio>{$libro/price/text()} €</precio>
+  <precio_iva>{$precio_iva} €</precio_iva>
+</libro>
+
+12. la suma total de los precios de los libros con la etiqueta "total".
+
+let $libros := /bookstore/book
+return <total>{sum($libros/price)}</total>
+
+13. cada uno de los precios de los libros, y al final una nueva etiqueta con la suma de los precios.
+
+let $libros := /bookstore/book
+return <total>{sum($libros/price)}</total>
+
+14. el título y el número de autores que tiene cada título en etiquetas diferentes.
+
+for $libro in /bookstore/book
+return 
+  <libro>
+    {$libro/title}
+    <autores>{count($libro/author)}</autores>
+  </libro>
+
+15. en la misma etiqueta el título y entre paréntesis el número de autores que tiene ese título.
+
+for $libro in /bookstore/book
+return <libro>{$libro/title/text()} ({count($libro/author)})</libro>
+
+16. los libros escritos en años que terminen en "3".
+
+for $libro in /bookstore/book
+where ends-with($libro/year, "3")
+return $libro
+
+17. los libros cuya categoría empiece por "C".
+
+for $libro in /bookstore/book
+where starts-with($libro/@category, "C")
+return $libro
+
+18. los libros que tengan una "X" mayúscula o minúscula en el título ordenados de manera descendente.
+
+for $libro in /bookstore/book
+where contains($libro/title, "x") or contains($libro/title, "X")
+order by $libro/title descending
+return $libro
+
+19. el título y el número de caracteres que tiene cada título, cada uno con su propia etiqueta.
+
+for $año in distinct-values(/bookstore/book/year)
+return <año>{$año}</año>
+
+20. todos los años en los que se ha publicado un libro eliminando los repetidos. Etiquétalos con "año".
+
+for $año in distinct-values(/bookstore/book/year)
+return <año>{$año}</año>
+
+21. todos los autores eliminando los que se repiten y ordenados por el número de caracteres que tiene cada autor.
+
+for $autor in distinct-values(/bookstore/book/author)
+order by string-length($autor)
+return <autor>{$autor}</autor>
+
+22. los títulos en una tabla de HTML.
+
+<table>
+{
+  for $libro in /bookstore/book
+  return 
+    <tr>
+      <td>{$libro/title/text()}</td>
+    </tr>
+}
+</table>
