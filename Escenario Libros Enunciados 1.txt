@@ -1,0 +1,156 @@
+1. Listar el título de todos los libros.
+
+for $libros in doc("libros.xml")/bib/libro/titulo
+return $libros
+
+2. Listar año y título de todos los libros, ordenados por el año.
+
+for $a in doc("libros.xml")//libro
+order by $a/@ano
+return
+<libro>
+{$a/@ano}
+{$a/titulo}
+</libro>
+
+3. Listar los libros cuyo precio sea 65.95
+
+for $a in doc("libros.xml")//libro
+where $a/prezo = "65.95"
+return $a
+
+4. Listar los libros publicados antes del año 2000
+
+for $a in doc("libros.xml")//libro
+where $a/@ano < "2000"
+return $a
+
+5. Listar año y título de los libros publicados por Addison-Wesley después del año 1992.
+
+for $a in doc("libros.xml")/bib/libro
+where $a/editorial = "Addison-Wesley" and $a/@ano > 1991
+return
+<libro ano="{ $a/@ano }">
+{ $a/titulo }
+</libro>
+
+6. Listar año y título de los libros que tienen más de un autor.
+
+for $a in doc("../prueba/libros.xml")/bib/libro
+return
+if (count($a/autor) > 1) 
+ then <libro ano="{ $a/@ano }">
+      { $a/titulo }
+ else () 
+</libro>
+
+7. Listar año y título de los libros que tienen no tienen autor.
+
+for $a in doc("../prueba/libros.xml")/bib/libro
+return
+if (count($a/autor) = 0) 
+ then <libro ano="{ $a/@ano }">
+      { $a/titulo }
+</libro>
+
+8. Mostrar los apellidos de los autores que aparecen en el documento, sin repeticiones, ordenadosalfabéticamente.
+
+for $a in distinct-values(doc("../prueba/libros.xml") 
+//autor/apelido) 
+order by $a 
+return <apelidos>{ $a }</apelidos>
+
+9. Por cada libro, listar agrupado en un elemento <result> su titulo y autores
+
+for $b in doc("../prueba/libros.xml")//libro 
+return 
+ <result> 
+{ $b/titulo }
+<autores>
+{ 
+ for $a at $i in $b/autor 
+ return <autor>{string($a)}</autor> 
+}
+</autores>
+</result>
+
+10. Por cada libro, obtener su título y el número de autores, agrupados en un elemento <libro>
+
+for $b in doc("../prueba/libros.xml")//libro 
+return 
+ <libro> 
+{ $b/titulo }
+<numeroAutores> 
+{count($b/autor)}
+</numeroAutores>
+ </libro>
+
+11. Generar un documento html con un encabezado que diga “Listado de libros” seguido de una tabla de 3 columnas, en la que se muestre el titulo, editorial y precio de cada libro. 
+La tabla deberá tener bordes y la primera fila tendrá un formato especial con los nombres de las columnas. 
+Las columnas de título y editorial irán alineadas a la izquierda, y el precio a la derecha.
+
+<html> 
+ <head> 
+  <title> Listado de libros </title> 
+  </head>
+ <body> 
+  <table border="1">
+   <caption>Listado de libros</caption>
+   <th> Titulo </th>  
+   <th> Editorial </th>  
+   <th> Precio </th>  
+
+{ 
+for $a in doc("../prueba/libros.xml")/bib/libro 
+return 
+   <tr> 
+    <td align ="left"> <i> { string( $a/titulo ) } </i> </td> 
+	<td align ="left"> { string( $a/editorial ) } </td>
+	<td align ="right"> { string( $a/prezo) } </td>
+   </tr> 
+}
+
+(: No lo pide el enunciado, pero así se podría mostrar el precio medio de los libros :)
+{ 
+let $a := doc("../prueba/libros.xml")/bib/libro 
+return 
+   <tr> 
+    <td> {avg( $a/prezo ) } </td> 
+   </tr> 
+} 
+  </table> 
+  </body> 
+</html>
+
+12. Generar el siguiente documento html con la información de los libros del autor Stevens. El valor precio total es un campo calculado utilizando una consulta con una cláusula let.
+
+<html> 
+ <head> 
+  <title> Libros de Stevens </title> 
+  </head>
+ <body> 
+  <table border="1">
+   <caption>Listado de libros</caption>
+   <th> Titulo </th>  
+   <th> Precio </th>  
+{ 
+for $a in doc("../prueba/libros.xml")//libro 
+where $a/autor/apelido="Stevens"
+return 
+<tr> 
+<td>{$a/titulo}</td>
+<td>{$a/prezo}</td>
+</tr>
+} 
+
+{
+let $a := doc("../prueba/libros.xml")/bib/libro 
+where $a/autor/apelido="Stevens"
+return 
+   <tr> 
+    <td> {sum( $a/prezo ) } </td> 
+   </tr> 
+} 
+  </table> 
+  </body> 
+</html>
