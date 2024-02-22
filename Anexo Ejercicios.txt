@@ -1,0 +1,157 @@
+
+Consulta: ciudad de los proveedores
+
+Extraer la ciudad de los proveedores (no debe aparecer la etiqueta) que tengan un estado mayor de 15.
+
+for $proveedor in doc("datos.xml")/datos/proveedores/proveedor
+where $proveedor/estado > 15
+return $proveedor/ciudad/text()
+
+Consulta: filas de la tabla partes
+
+Averiguar cuantas partes existen, es decir, el total de filas de la «tabla» partes.
+
+Para resolverlo una tentación muy común es resolverlo así:
+
+for $partes in doc("datos.xml")/datos/partes
+return count ($partes/parte)
+
+Paso 1: hacemos el cruce
+Una primera aproximación sería esta:
+
+for $suministra in
+  doc("datos.xml")/datos/suministros/suministra
+for $proyecto in
+  doc("datos.xml")/datos/proyectos/proyecto
+where $suministra/numproyecto = $proyecto/@numproyecto
+
+return $proyecto/nombreproyecto
+
+Paso 2: añadir condiciones
+Nos han dicho que la cantidad de la tabla suministra debe ser mayor de 350, así que en el where o en el for de suministra podemos añadir una condición de filtrado:
+
+Asimismo necesitamos solamente los proyectos cuyo campo ciudad sea Paris.
+
+for $suministra in
+  doc("datos.xml")/datos/suministros/suministra[cantidad>350]
+for $proyecto in
+  doc("datos.xml")/datos/proyectos/proyecto[ciudad="Paris"]
+where $suministra/numproyecto = $proyecto/@numproyecto
+
+return $proyecto/nombreproyecto
+
+Consulta: ciudades iguales
+
+Obtener los nombres de proyecto y nombres de parte que estén en la misma ciudad.
+
+for $proyecto in
+    doc("datos.xml")/datos/proyectos/proyecto
+    for $parte in
+        doc("datos.xml")/datos/partes/parte
+        where
+            $parte/ciudad = $proyecto/ciudad
+    return concat(
+        $parte/nombreparte, " en la misma ciudad que ",
+        $proyecto/nombreproyecto, "-----"
+    )
+
+Consulta: partes con colores iguales
+
+Obtener parejas de partes que tengan el mismo color (indicando el nombre de ambas partes y el color que comparten)
+
+for $p1 in
+    doc("datos.xml")/datos/partes/parte
+for $p2 in
+    doc("datos.xml")/datos/partes/parte
+    where
+        $p1/color = $p2/color
+    return concat ($p1/nombreparte,
+                   " tiene el mismo color que ",
+                   $p2/nombreparte,
+                   " en concreto el color es:",
+                   $p1/color, "
+                   ")
+
+Consulta: cantidad de partes de Londres
+
+Averiguar cuantas partes existen cuya ciudad sea «Londres», es decir, el total de filas de la «tabla» partes pero teniendo en cuenta la condición de que el «campo» ciudad debe ser Londres.
+
+count (doc("datos.xml")/datos/partes/parte[ciudad='Londres'])
+
+Paso 1: cruce de tablas
+
+for $parte in
+    doc("datos.xml")/datos/partes/parte
+for $suministra in
+    doc("datos.xml")/datos/suministros/suministra
+where
+    $parte/@numparte = $suministra/numparte
+//Faltaria el return
+
+Paso 2: añadir condicion de filtrado
+
+for $parte in
+    doc("datos.xml")/datos/partes/parte
+for $suministra in
+    doc("datos.xml")/datos/suministros/suministra
+where
+    $parte/@numparte = $suministra/numparte
+and
+    $parte/color='Rojo'
+return $suministra/cantidad
+
+Paso 3: calcular la media
+
+avg (
+    for $parte in
+        doc("datos.xml")/datos/partes/parte[color='Rojo']
+    for $suministra in
+        doc("datos.xml")/datos/suministros/suministra
+    where
+        $parte/@numparte = $suministra/numparte
+    return $suministra/cantidad
+)
+
+Consulta: media individual de partes rojas
+
+En el ejercicio anterior hemos calculado la media global de partes rojas. Sin embargo, nos interesaría conocer la media de cada parte roja. Es decir, la media de p1, la media de p4 y la media de p6.
+
+Extraigamos primero las partes cuyo color es rojo:
+
+for $parte in doc("datos.xml")/datos/partes/parte[color='Rojo']
+return $parte
+
+Si analizamos los resultados veremos que nos devuelve las partes p1, p4 y p6. Una vez hecho esto ahora devolvamos la media para cada una de esas partes:
+
+for $parte in doc("datos.xml")/datos/partes/parte[color='Rojo']
+return avg( doc("datos.xml")/datos/suministros/suministra
+    [numparte=$parte/@numparte]/cantidad)
+
+Consulta: media de suministros
+
+Averiguar la media de la cantidad de partes que aparecen en la «tabla» suministra
+
+avg (doc("datos.xml")/datos/suministros/suministra/cantidad)
+
+Consulta: media por proveedor
+
+Averiguar la media de cantidades por proveedor usando los datos de la tabla suministra.
+
+Hagamos esta consulta por partes. En primer lugar, saquemos los distintos proveedores que hay en suministra
+
+for $n in distinct-values(
+doc("datos.xml")/datos/
+proveedores/proveedor/@numprov)
+return $n
+
+Consulta: suministros en grandes cantidades
+
+Averiguar el nombre de los proyectos (sin que haya repeticiones) que reciban una cantidad en la tabla suministra mayor de 650.
+
+for $proyecto
+in doc("datos.xml")/datos/proyectos/proyecto
+for $suministra
+in
+doc("datos.xml")/datos/suministros/suministra[cantidad>650]
+where $proyecto/@numproyecto = $suministra/numproyecto
+return ($proyecto/nombreproyecto, $suministra/cantidad)
